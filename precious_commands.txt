@@ -1,0 +1,121 @@
+레일즈 새로운 칼럼 만들기
+rails generate migration AddColumnsToTableName column1:type column2:type column3:type column4:type column5:type
+
+리눅스 보여주기 
+head -n 10 db/csv/hanyoung/upto280t.csv
+
+Sqlite3
+테이블 숫자
+SELECT COUNT(*) FrOM jwords;
+
+거꾸로 5개
+SELECT * FrOM trans OrDEr BY id DESC LIMIT 5;       
+
+아이디 있음
+.import db/csv/hanyoung/upto201244.csv trans;
+.import db/csv/30001to100000.csv trans;
+.import db/csv/3001to13000.csv trans;
+.import db/csv/100001to151318.csv trans;
+.import db/csv/13001to30000.csv trans;
+ 30개 보여주기
+select * from trans limit 30;
+ 
+temp에 집어 넣기 
+.import --csv db/csv/until500.csv trans_temp
+
+파일 집어 넣기 
+insert into trans(ko,en,created_at,updated_at) select ko,en,d1,d2 from trans_temp;
+
+스키마 보기 
+pragma table_info(trans_temp2);
+pragma table_info(trans);
+
+Table2에 있는 내용을 모두 Table1으로 집어넣기 
+INSErT INTO table1 SELECT * FrOM table2; 
+
+.import db/csv/hanyoung/upto201244.csv trans;
+
+바꾸기
+UPDATE [trans] SET [id] = [id] - 100001;       
+
+rails c에서 성공코드
+k = 0  
+
+
+csvfiles = ['upto280t.csv','upto380t.csv','upto480t.csv','upto580t.csv','upto680t.csv','upto780t.csv','upto880t.csv','upto980t.csv']
+csvfiles.each do |csvfile|
+
+require 'csv'
+csvfile = 'db/csv/imgs/gif_urls.csv'
+begin
+	CSV.foreach(csvfile, headers: false, col_sep: ',') do |row|
+		Img.create!(
+		url: row[0])
+	end
+  end
+rescue
+  puts "csvfile"
+end
+ 
+begin
+  urls = Set.new
+  CSV.foreach(csvfile, headers: false, col_sep: ',') do |row|
+    url = row[0]
+    if urls.add?(url)
+      Img.create!(
+        url: url
+      )
+    end
+  end
+rescue
+  puts "csvfile"
+end
+
+중복행 삭제 
+DELETE FrOM jwords
+WHErE rowid NOT IN (
+  SELECT MIN(rowid)
+  FrOM jwords
+  GrOUP BY ko
+);
+
+DELETE FrOM trans WHErE (ko IS NULL Or ko = '');
+
+리눅스 10줄만 보여주기 
+head -n 10 file_name
+
+rails에서 특정 표현을 바꾸는.. 
+Jword.where("ko LIKE ?", "%필요데스%").each do |j|
+  j.ko.gsub!("필요데스", "필요해요")
+  j.save
+end
+
+#레일즈, 카테고리에서 날씨가 포함된 경우 지워라. 
+Jword.where("category LIKE ?", "%날씨%").destroy_all
+
+#rails CSV 추가 업데이트용
+require 'csv'
+
+CSV.foreach('db/csv/jword/jp_sentences.csv', headers: false, col_sep: ',') do |row|
+  jp = row[0]
+  ko = row[1]
+  pronon = row[2]
+  category = row[3]
+  created_at = row[4]
+  updated_at = row[5]
+
+
+  existing_jword = Jword.find_by(jp: jp, ko: ko) # jp와 ko 칼럼을 기준으로 기존 데이터를 찾습니다.
+
+  if existing_jword.nil? # 기존 데이터가 없는 경우에만 생성합니다.
+    Jword.create!(
+      jp: jp,
+      ko: ko,
+      pronon: pronon,
+      created_at: created_at,
+      updated_at: updated_at,
+      category: category
+    )
+  end
+end
+
